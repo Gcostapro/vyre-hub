@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, Users, Kanban, UsersRound, BellRing, ChevronLeft, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Users, Kanban, UsersRound, BellRing, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { C } from "../../lib/constants";
 import { ALERTS } from "../../data/mockData";
 
@@ -55,7 +55,7 @@ function NavItem({ item, collapsed }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ user, onLogout }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -109,8 +109,52 @@ export function Sidebar() {
         <NavItem item={NAV[4]} collapsed={collapsed} />
       </div>
 
-      {/* Collapse button */}
+      {/* User + actions */}
       <div style={{ padding: "12px 8px", borderTop: `0.5px solid ${C.borderSolid}` }}>
+        {/* User info */}
+        {!collapsed && user && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "8px 10px", marginBottom: 4, borderRadius: 8,
+            background: C.surface,
+          }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+              background: C.blueBg, border: `1px solid ${C.blue}30`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 11, fontWeight: 700, color: C.blueLight,
+            }}>
+              {user.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user.name}
+              </div>
+              <div style={{ fontSize: 10, color: C.dim, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user.email}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Logout */}
+        {onLogout && (
+          <div
+            onClick={onLogout}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start",
+              gap: 8, padding: "8px 14px", borderRadius: 6, cursor: "pointer",
+              color: C.dim, fontSize: 12, transition: "color 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = C.red}
+            onMouseLeave={e => e.currentTarget.style.color = C.dim}
+          >
+            <LogOut size={15} />
+            {!collapsed && <span>Sair</span>}
+          </div>
+        )}
+
+        {/* Collapse button */}
         <div
           onClick={() => setCollapsed(!collapsed)}
           style={{

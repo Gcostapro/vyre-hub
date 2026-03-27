@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sidebar } from "./components/layout/Sidebar";
 import Dashboard    from "./pages/Dashboard";
@@ -7,6 +8,7 @@ import ClientDetail from "./pages/ClientDetail";
 import Kanban       from "./pages/Kanban";
 import Team         from "./pages/Team";
 import Alerts       from "./pages/Alerts";
+import Login        from "./pages/Login";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -27,17 +29,35 @@ function AnimatedRoutes() {
           <Route path="/kanban"      element={<Kanban />} />
           <Route path="/team"        element={<Team />} />
           <Route path="/alerts"      element={<Alerts />} />
+          <Route path="*"            element={<Navigate to="/" replace />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
   );
 }
 
+function getStoredUser() {
+  try { return JSON.parse(localStorage.getItem("vyre_user")); } catch { return null; }
+}
+
 export default function App() {
+  const [user, setUser] = useState(getStoredUser);
+
+  function handleLogin(u) { setUser(u); }
+
+  function handleLogout() {
+    localStorage.removeItem("vyre_user");
+    setUser(null);
+  }
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <BrowserRouter>
       <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0A0A0F" }}>
-        <Sidebar />
+        <Sidebar user={user} onLogout={handleLogout} />
         <AnimatedRoutes />
       </div>
     </BrowserRouter>
