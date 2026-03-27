@@ -63,13 +63,9 @@ export default function Login({ onLogin }) {
       >
         {/* Logo / brand */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 12,
-            background: `linear-gradient(135deg, ${C.blue}, ${C.blueDark})`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            margin: "0 auto 16px", fontSize: 22, fontWeight: 800, color: "#fff",
-            boxShadow: `0 8px 24px ${C.blue}40`,
-          }}>V</div>
+          <div style={{ margin: "0 auto 16px", width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src="/logo.png" alt="Vyre" style={{ width: 56, height: 56, objectFit: "contain" }} />
+          </div>
           <div style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 4 }}>
             Vyre Operations Hub
           </div>
