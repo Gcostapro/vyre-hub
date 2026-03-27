@@ -1,5 +1,5 @@
 import { C, ROAS_COLOR } from "../lib/constants";
-import { CLIENTS, ALERTS, CHART_DATA, CLIENT_DISTRIBUTION } from "../data/mockData";
+import { CLIENTS, ALERTS, CAMPAIGNS, CHART_DATA, CLIENT_DISTRIBUTION } from "../data/mockData";
 import { Header } from "../components/layout/Header";
 import { MetricCard } from "../components/dashboard/MetricCard";
 import { HealthBar } from "../components/dashboard/HealthBar";
@@ -10,20 +10,20 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 
-const totalSpend   = CLIENTS.reduce((s, c) => s + c.spend, 0);
-const totalRevenue = CLIENTS.reduce((s, c) => s + c.revenue, 0);
-const totalLeads   = CLIENTS.reduce((s, c) => s + c.leads, 0);
-const avgRoas      = +(CLIENTS.reduce((s, c) => s + c.roas, 0) / CLIENTS.length).toFixed(1);
-const avgCpl       = Math.round(totalSpend / totalLeads);
-const avgHealth    = Math.round(CLIENTS.reduce((s, c) => s + c.health, 0) / CLIENTS.length);
+const totalSpend    = CLIENTS.reduce((s, c) => s + c.spend, 0);
+const totalLeads    = CLIENTS.reduce((s, c) => s + c.leads, 0);
+const avgRoas       = +(CLIENTS.reduce((s, c) => s + c.roas, 0) / CLIENTS.length).toFixed(1);
+const avgCpl        = Math.round(totalSpend / totalLeads);
+const avgHealth     = Math.round(CLIENTS.reduce((s, c) => s + c.health, 0) / CLIENTS.length);
+const activeCampaigns = CAMPAIGNS.filter(c => c.status === "active").length;
 
 const METRICS = [
-  { label: "Investimento total", value: totalSpend,   prefix: "R$ ", change: 12.4 },
-  { label: "Receita gerada",     value: totalRevenue, prefix: "R$ ", change: 8.7  },
-  { label: "Total de leads",     value: totalLeads,   change: 15.2 },
-  { label: "ROAS médio",         value: avgRoas,      suffix: "x",  change: 5.1  },
-  { label: "CPL médio",          value: avgCpl,       prefix: "R$ ", change: -8.3 },
-  { label: "Saúde geral",        value: avgHealth,    suffix: "%",  change: 3.2  },
+  { label: "Investimento total",  value: totalSpend,       prefix: "R$ ", change: 12.4 },
+  { label: "Total de leads",      value: totalLeads,                        change: 15.2 },
+  { label: "ROAS médio",          value: avgRoas,           suffix: "x",   change: 5.1  },
+  { label: "CPL médio",           value: avgCpl,            prefix: "R$ ", change: -8.3 },
+  { label: "Saúde geral",         value: avgHealth,         suffix: "%",   change: 3.2  },
+  { label: "Campanhas ativas",    value: activeCampaigns,                   change: 0    },
 ];
 
 const chartTick = { fill: C.dim, fontSize: 11 };
@@ -46,33 +46,34 @@ export default function Dashboard() {
 
       {/* Charts row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 16, marginBottom: 24 }}>
-        {/* Area chart */}
+        {/* Area chart — Investimento × Leads */}
         <div style={{ background: C.card, border: `0.5px solid ${C.borderSolid}`, borderRadius: 12, padding: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 16 }}>Investimento × Receita — últimos 30 dias</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 16 }}>Investimento × Leads — últimos 30 dias</div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={CHART_DATA}>
               <defs>
                 <linearGradient id="gSpend" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor={C.blue}  stopOpacity={0.25} />
-                  <stop offset="95%" stopColor={C.blue}  stopOpacity={0} />
+                  <stop offset="5%"  stopColor={C.blue}   stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={C.blue}   stopOpacity={0} />
                 </linearGradient>
-                <linearGradient id="gRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor={C.green} stopOpacity={0.2} />
-                  <stop offset="95%" stopColor={C.green} stopOpacity={0} />
+                <linearGradient id="gLeads" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor={C.green}  stopOpacity={0.2} />
+                  <stop offset="95%" stopColor={C.green}  stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="date" tick={chartTick} axisLine={false} tickLine={false} interval={4} />
-              <YAxis tick={chartTick} axisLine={false} tickLine={false} width={50} tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
+              <YAxis yAxisId="spend" tick={chartTick} axisLine={false} tickLine={false} width={50} tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
+              <YAxis yAxisId="leads" orientation="right" tick={chartTick} axisLine={false} tickLine={false} width={36} />
               <Tooltip contentStyle={{ background: C.surface, border: `0.5px solid ${C.borderSolid}`, borderRadius: 8, fontSize: 12 }} />
-              <Area type="monotone" dataKey="spend"   name="Investimento" stroke={C.blue}  fill="url(#gSpend)"   strokeWidth={2} />
-              <Area type="monotone" dataKey="revenue" name="Receita"      stroke={C.green} fill="url(#gRevenue)" strokeWidth={2} />
+              <Area yAxisId="spend" type="monotone" dataKey="spend" name="Investimento" stroke={C.blue}  fill="url(#gSpend)" strokeWidth={2} />
+              <Area yAxisId="leads" type="monotone" dataKey="leads" name="Leads"        stroke={C.green} fill="url(#gLeads)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Donut chart */}
         <div style={{ background: C.card, border: `0.5px solid ${C.borderSolid}`, borderRadius: 12, padding: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>Distribuição por cliente</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>Distribuição de verba por cliente</div>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie data={CLIENT_DISTRIBUTION} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">

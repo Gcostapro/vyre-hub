@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ALERTS as INITIAL, CLIENTS } from "../data/mockData";
 import { Header } from "../components/layout/Header";
+import { Button } from "../components/ui/Button";
 import { C } from "../lib/constants";
 import { useNavigate } from "react-router-dom";
+import { CheckCheck, X } from "lucide-react";
 
 const TYPE_CONFIG = {
   danger:  { icon: "!", color: C.red,    label: "Crítico",  variant: "danger"  },
@@ -19,16 +21,34 @@ export default function Alerts() {
   const [filter, setFilter] = useState("all");
   const navigate = useNavigate();
 
-  const filtered = filter === "all" ? alerts : alerts.filter(a => a.type === filter);
+  const filtered    = filter === "all" ? alerts : alerts.filter(a => a.type === filter);
   const unreadCount = alerts.filter(a => !a.read).length;
 
   function markRead(id) {
     setAlerts(p => p.map(a => a.id === id ? { ...a, read: true } : a));
   }
 
+  function markAllRead() {
+    setAlerts(p => p.map(a => ({ ...a, read: true })));
+  }
+
+  function dismiss(id) {
+    setAlerts(p => p.filter(a => a.id !== id));
+  }
+
   return (
     <div>
-      <Header title="Alertas" subtitle={`${unreadCount} não lidos`} />
+      <Header
+        title="Alertas"
+        subtitle={unreadCount > 0 ? `${unreadCount} não lido${unreadCount !== 1 ? "s" : ""}` : "Tudo em dia"}
+        actions={
+          unreadCount > 0 && (
+            <Button variant="ghost" icon={CheckCheck} onClick={markAllRead}>
+              Marcar todos como lido
+            </Button>
+          )
+        }
+      />
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         {FILTERS.map(([key, label]) => (
@@ -42,54 +62,72 @@ export default function Alerts() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {filtered.map((alert, i) => {
-          const cfg = TYPE_CONFIG[alert.type];
-          const client = CLIENTS.find(c => c.id === alert.clientId);
-          return (
-            <motion.div
-              key={alert.id}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04 }}
-              onClick={() => markRead(alert.id)}
-              style={{
-                display: "flex", gap: 14, alignItems: "flex-start",
-                background: alert.read ? C.card : `${cfg.color}08`,
-                border: `0.5px solid ${alert.read ? C.borderSolid : cfg.color + "40"}`,
-                borderRadius: 12, padding: "16px 18px", cursor: "pointer",
-              }}
-            >
-              <div style={{
-                width: 34, height: 34, borderRadius: 8, flexShrink: 0,
-                background: `${cfg.color}18`, color: cfg.color,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 14, fontWeight: 700,
-              }}>{cfg.icon}</div>
+        <AnimatePresence initial={false}>
+          {filtered.map((alert, i) => {
+            const cfg    = TYPE_CONFIG[alert.type];
+            const client = CLIENTS.find(c => c.id === alert.clientId);
+            return (
+              <motion.div
+                key={alert.id}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0, padding: 0 }}
+                transition={{ delay: i * 0.03, duration: 0.2 }}
+                onClick={() => markRead(alert.id)}
+                style={{
+                  display: "flex", gap: 14, alignItems: "flex-start",
+                  background: alert.read ? C.card : `${cfg.color}08`,
+                  border: `0.5px solid ${alert.read ? C.borderSolid : cfg.color + "40"}`,
+                  borderRadius: 12, padding: "16px 18px", cursor: "pointer", position: "relative",
+                }}
+              >
+                <div style={{
+                  width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                  background: `${cfg.color}18`, color: cfg.color,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 14, fontWeight: 700,
+                }}>{cfg.icon}</div>
 
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: cfg.color, textTransform: "uppercase", letterSpacing: 0.6 }}>{cfg.label}</span>
-                  {!alert.read && <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.color }} />}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: cfg.color, textTransform: "uppercase", letterSpacing: 0.6 }}>{cfg.label}</span>
+                    {!alert.read && <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.color }} />}
+                  </div>
+                  <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{alert.message}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
+                    <span style={{ fontSize: 11, color: C.dim }}>{alert.time}</span>
+                    {client && (
+                      <span
+                        onClick={e => { e.stopPropagation(); navigate(`/clients/${client.id}`); }}
+                        style={{ fontSize: 11, color: C.blue, cursor: "pointer", textDecoration: "underline" }}
+                      >{client.name}</span>
+                    )}
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{alert.message}</div>
-                <div style={{ display: "flex", align: "center", gap: 10, marginTop: 6 }}>
-                  <span style={{ fontSize: 11, color: C.dim }}>{alert.time}</span>
-                  {client && (
-                    <span
-                      onClick={e => { e.stopPropagation(); navigate(`/clients/${client.id}`); }}
-                      style={{ fontSize: 11, color: C.blue, cursor: "pointer", textDecoration: "underline" }}
-                    >{client.name}</span>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
+
+                {/* Dismiss button */}
+                <button
+                  onClick={e => { e.stopPropagation(); dismiss(alert.id); }}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    color: C.dim, padding: 4, borderRadius: 4, display: "flex",
+                    transition: "color 0.15s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = C.red}
+                  onMouseLeave={e => e.currentTarget.style.color = C.dim}
+                  title="Arquivar"
+                >
+                  <X size={14} />
+                </button>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
 
       {filtered.length === 0 && (
         <div style={{ textAlign: "center", color: C.dim, padding: 60, fontSize: 14 }}>
-          Nenhum alerta nesta categoria.
+          {filter === "all" ? "Nenhum alerta." : "Nenhum alerta nesta categoria."}
         </div>
       )}
     </div>
